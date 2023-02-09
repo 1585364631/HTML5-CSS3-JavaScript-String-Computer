@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="utf8" />
+  <head> </head>
+  <style>
+    * {
+      border: 0px;
+      box-sizing: inherit;
+    }
+
+    table {
+      text-align: center;
+      border: 5px solid black;
+    }
+
+    th {
+      text-align: center;
+      border: 1px solid black;
+      width: 50px;
+      height: 50px;
+    }
+
+    td {
+      text-align: center;
+      border: 1px solid black;
+      width: 50px;
+      height: 50px;
+    }
+  </style>
+  <body>
+    <table border="10px">
+      <tr>
+        <th colspan="4" id="wenben">计算器</th>
+      </tr>
+      <tr>
+        <td>+</td>
+        <td>-</td>
+        <td>*</td>
+        <td>/</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>8</td>
+        <td>9</td>
+        <td>c</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>5</td>
+        <td>6</td>
+        <td>←</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+        <td>(</td>
+      </tr>
+      <tr>
+        <td>0</td>
+        <td>.</td>
+        <td>=</td>
+        <td>)</td>
+      </tr>
+    </table>
+  </body>
+  <script>
+    var compute_text = []; //输入内容
+
+    var fuhao = ["+", "-", "*", "/", "(", ")"]; //符号栈
+
+    //表格值
+    var but = [
+      "+",
+      "-",
+      "*",
+      "/",
+      "7",
+      "8",
+      "9",
+      "c",
+      "4",
+      "5",
+      "6",
+      "←",
+      "1",
+      "2",
+      "3",
+      "(",
+      "0",
+      ".",
+      "=",
+      ")",
+    ];
+
+    // 生成按钮和点击函数
+    var _td = document.getElementsByTagName("td");
+    for (var i = 0; i <= 19; i++) {
+      _td[i].innerHTML =
+        '<input type="button" style="width: 45px;height:45px" onclick="add_string(\'' +
+        but[i] +
+        "')\" value=" +
+        but[i] +
+        " />";
+    }
+
+    //处理括号问题
+    function brackets(_text) {
+      var text_cache = _text.join("");
+
+      //循环处理复杂括号问题
+      while (true) {
+        //如果没有检测到括号则退出循环
+        if (!text_cache.includes("(")) {
+          break;
+        }
+
+        //使用最后一个'('进行切割
+        var new_arr = [
+          text_cache.substring(0, text_cache.lastIndexOf("(")),
+          text_cache.substring(text_cache.lastIndexOf("(") + 1),
+        ];
+
+        //使用第一个')'进行切割
+        var new_arr1 = [
+          new_arr[1].substring(0, new_arr[1].indexOf(")")),
+          new_arr[1].substring(new_arr[1].indexOf(")") + 1),
+        ];
+
+        //去除括号，括号内容传参计算，合并内容
+        text_cache = new_arr[0] + compute_value(new_arr1[0]) + new_arr1[1];
+
+        //继续循环
+      }
+      return compute_value(text_cache);
+    }
+
+    //对数字字符串进行加减乘除并且返回结果
+    function compute_value(_text) {
+      var cache_list = [];
+      var cache_text = "";
+
+      //将多个个位数进行合并，栈只分为数字，符号
+      for (var i = 0; i < _text.length; i++) {
+        if (fuhao.includes(_text[i])) {
+          if (cache_text != "") {
+            cache_list.push(cache_text);
+          }
+          cache_text = "";
+          cache_list.push(_text[i]);
+          continue;
+        }
+        cache_text += _text[i];
+        if (i == _text.length - 1) {
+          cache_list.push(cache_text);
+          cache_text = "";
+          continue;
+        }
+      }
+
+      //按照数学算法，先乘除后加减，先将乘法除法计算
+      for (var i = 0; i < cache_list.length; i++) {
+        if (!cache_list.includes("/") && !cache_list.includes("*")) {
+          break;
+        }
+        var fu = 0;
+        if (cache_list[i] == "/") {
+          fu = 1;
+        }
+        if (cache_list[i] == "*") {
+          fu = 2;
+        }
+        if (fu != 0) {
+          if (fu == 1) {
+            cache_list[i - 1] =
+              parseFloat(cache_list[i - 1]) / parseFloat(cache_list[i + 1]);
+          }
+          if (fu == 2) {
+            cache_list[i - 1] =
+              parseFloat(cache_list[i + 1]) * parseFloat(cache_list[i - 1]);
+          }
+          cache_list.splice(i, 2);
+          i--;
+          continue;
+        }
+      }
+
+      //按照数学算法，先乘除后加减，后将加法减法计算
+      for (var i = 0; i < cache_list.length; i++) {
+        if (!cache_list.includes("+") && !cache_list.includes("-")) {
+          break;
+        }
+        var fu = 0;
+        if (cache_list[i] == "-") {
+          fu = 1;
+        }
+        if (cache_list[i] == "+") {
+          fu = 2;
+        }
+        if (fu != 0) {
+          if (fu == 1) {
+            cache_list[i - 1] =
+              parseFloat(cache_list[i - 1]) - parseFloat(cache_list[i + 1]);
+          }
+          if (fu == 2) {
+            cache_list[i - 1] =
+              parseFloat(cache_list[i + 1]) + parseFloat(cache_list[i - 1]);
+          }
+          cache_list.splice(i, 2);
+          i--;
+          continue;
+        }
+      }
+      return cache_list.join("");
+    }
+
+    //按钮点击事件
+    function add_string(_text) {
+      //归0，存储列表清空
+      if (_text == "c") {
+        compute_text = [];
+        document.getElementById("wenben").innerHTML = "";
+        return;
+      }
+
+      //退格，列表最后去除最后一个元素
+      if (_text == "←") {
+        if (compute_text.length != 0) {
+          compute_text.pop(compute_text.length - 1);
+          document.getElementById("wenben").innerHTML = compute_text.join("");
+          return;
+        }
+      }
+
+      if (_text == "=") {
+        //计算结果
+        document.getElementById("wenben").innerHTML =
+          compute_text.join("") + "=" + brackets(compute_text);
+        compute_text = [];
+        return;
+      }
+
+      //其他按键添加值进列表
+      compute_text.push(_text);
+      document.getElementById("wenben").innerHTML = compute_text.join("");
+    }
+  </script>
+</html>
